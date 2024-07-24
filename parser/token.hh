@@ -10,15 +10,15 @@ public:
   virtual ~Token() = 0;
 };
 
-enum SignType { LPAREN=0, RPAREN, COMMA, PTCOMMA, EQUAL, LT, GT, LTEQ, GTEQ, ALL, ERR, END };
-const char* sign_names[12] = {
-  "(", ")", ",", ";", "=", "<", ">", "<=", ">=", "*", "ERR", "END"
+enum SignType { LPAREN=0, RPAREN, COMMA, PTCOMMA, EQUAL, NEQ, LT, GT, LTEQ, GTEQ, ALL, ERR, END };
+const char* sign_names[13] = {
+  "(", ")", ",", ";", "=", "!=", "<", ">", "<=", ">=", "*", "ERR", "END"
 };
 
-enum KeywordType { CREATE=0, INSERT, INTO, VALUES, UPDATE, DROP, TABLE, SELECT, FROM, WHERE, IF, EXISTS, ON, SET, BETWEEN, IN, LIKE, AND, OR, NULLW, NOT, AS, LIMIT, USING, INDEX };
-const char* keyword_names[25] = {
+enum KeywordType { CREATE=0, INSERT, INTO, VALUES, UPDATE, DROP, TABLE, SELECT, FROM, WHERE, ON, SET, BETWEEN, IN, LIKE, AND, OR, NULLW, NOT, AS, LIMIT, USING, INDEX };
+const char* keyword_names[23] = {
   "CREATE", "INSERT", "INTO", "VALUES", "UPDATE", "DROP", "TABLE", "SELECT", "FROM",
-  "WHERE", "IF", "EXISTS", "ON", "SET",
+  "WHERE", "ON", "SET",
   "BETWEEN", "IN", "LIKE", "AND", "OR", "NULL", "NOT", "AS", "LIMIT",
   "USING", "INDEX"
 };
