@@ -2,28 +2,56 @@
 #define AST_HH
 
 #include <cstring>
-
 #include <list>
-#include "imp_type.hh"
 #include "imp_value.hh"
-
 using namespace std;
 
 class ImpVisitor;
-class TypeVisitor;
+class CheckVisitor;
 
 enum FilterOp { EQ, NEQ, LT, GT, LTEQ, GTEQ };
+enum JoinOp { INNER, LEFT, RIGHT, CROSS };
 enum BinaryOp { AND, OR };
 enum UnaryOp { NEG, NOT };
 
 class SelectQuery;
 
 // ---------------------------------------------------------------- //
-// Toda expresion contiene un operador y uno o dos operandos
+// Una tabla es una referencia a una tabla en una base de datos 
+// que puede ser solo un name_table o un name_table como alias de un query asociado como la forma:
+// ['(' <select_query> ')' AS] <name_table>
+class TableDec {
+public:
+  string name_tableDec;
+  SelectQuery* query = nullptr;
+  TableDec(string name_table);
+  TableDec(string name_table, SelectQuery* query);
+  void accept(ImpVisitor* v);
+  void accept(CheckVisitor* v);
+  ~TableDec();
+};
+
+
+
+// ---------------------------------------------------------------- //
+// Un value es un valor que puede ser utilizado en una expresion que puede ser <int>, <varchar>, <boolean>, <date>
+class Value {
+public:
+  ValueData value;
+  Value(ValueData v);
+  void accept(ImpVisitor* v);
+  ValueType accept(CheckVisitor* v);
+  ~Value();
+};
+
+
+
+// ---------------------------------------------------------------- //
+// Toda expresion es una condicional con un operador y uno o dos operandos
 class Exp {
 public:
   virtual void accept(ImpVisitor* v) = 0;
-  virtual ImpType accept(TypeVisitor* v) = 0;
+  virtual void accept(CheckVisitor* v) = 0;
   virtual ~Exp() = 0;
 };
 
@@ -36,20 +64,22 @@ public:
   BinaryOp op;
   BinaryExp(Exp* l, Exp* r, BinaryOp op);
   void accept(ImpVisitor* v);
-  ImpType accept(TypeVisitor* v);
+  void accept(CheckVisitor* v);
   static string binopToString(BinaryOp op);
   ~BinaryExp();
 };
 
 
-// Expresion de la forma: <value> que puede ser <int>, <varchar>, <boolean>, <date>
-class ValueExp : public Exp {
+// Expresion de la forma: <op> <e>
+class UnaryExp : public Exp {
 public:
-  ImpValue value;
-  ValueExp(int v);
+  UnaryOp op;
+  Exp *e;
+  UnaryExp(Exp *e, UnaryOp op);
   void accept(ImpVisitor* v);
-  ImpType accept(TypeVisitor* v);
-  ~ValueExp();
+  void accept(CheckVisitor* v);
+  static string unopToString(UnaryOp op);
+  ~UnaryExp();
 };
 
 
@@ -59,34 +89,21 @@ public:
   Exp *e;
   ParenthExp(Exp *e);
   void accept(ImpVisitor* v);
-  ImpType accept(TypeVisitor* v);
+  void accept(CheckVisitor* v);
   ~ParenthExp();
 };
 
 
-// Expresion de la forma: <op> <e>
-class UnaryExp : public Exp {
-public:
-  UnaryOp op;
-  Exp *e;
-  UnaryExp(UnaryOp op, Exp *e);
-  void accept(ImpVisitor* v);
-  ImpType accept(TypeVisitor* v);
-  static string unaryopToString(UnaryOp op);
-  ~UnaryExp();
-};
-
-
-// Expresion de filtro de la forma: <id> <op> <value_exp>
+// Expresion de filtro de la forma: <id> <op> <value>
 class FilterExp : public Exp {
 public:
   string id;
-  ValueExp *value;
+  Value *value;
   FilterOp op;
-  FilterExp(string id, ValueExp* value, FilterOp op);
+  FilterExp(string id, Value* value, FilterOp op);
   void accept(ImpVisitor* v);
-  ImpType accept(TypeVisitor* v);
-  static string filteropToString(FilterOp op);
+  void accept(CheckVisitor* v);
+  static string filopToString(FilterOp op);
   ~FilterExp();
 };
 
@@ -95,11 +112,11 @@ public:
 class BetweenExp : public Exp {
 public:
   string id;
-  ValueExp *left;
-  ValueExp *right;
-  BetweenExp(string id, ValueExp* l, ValueExp* r);
+  Value *left;
+  Value *right;
+  BetweenExp(string id, Value* l, Value* r);
   void accept(ImpVisitor* v);
-  ImpType accept(TypeVisitor* v);
+  void accept(CheckVisitor* v);
   ~BetweenExp();
 };
 
@@ -111,7 +128,7 @@ public:
   string pattern;
   LikeExp(string id, string pattern);
   void accept(ImpVisitor* v);
-  ImpType accept(TypeVisitor* v);
+  void accept(CheckVisitor* v);
   ~LikeExp();
 };
 
@@ -123,19 +140,19 @@ public:
   string id2;
   JoinExp(string id1, string id2);
   void accept(ImpVisitor* v);
-  ImpType accept(TypeVisitor* v);
+  void accept(CheckVisitor* v);
   ~JoinExp();
 };
 
 
-// Expresion de la forma: <id> IN '(' <value_exp> [',' <value_exp>]* ')'
+// Expresion de la forma: <id> IN '(' <value> [',' <value>]* ')'
 class InValueExp : public Exp {
 public:
   string id;
-  list<ValueExp*> values;
-  InValueExp(list<ValueExp*> values);
+  list<Value*> values;
+  InValueExp(string id, list<Value*> values);
   void accept(ImpVisitor* v);
-  ImpType accept(TypeVisitor* v);
+  void accept(CheckVisitor* v);
   ~InValueExp();
 };
 
@@ -147,7 +164,7 @@ public:
   SelectQuery* query;
   InQueryExp(string id, SelectQuery* query);
   void accept(ImpVisitor* v);
-  ImpType accept(TypeVisitor* v);
+  void accept(CheckVisitor* v);
   ~InQueryExp();
 };
 
@@ -155,11 +172,11 @@ public:
 
 // ---------------------------------------------------------------- //
 // Un sentence es una ejecución interna dentro de uma consulta SQL
-// Mas adelante, habrá un plan de ejecución donde en una query, las sentences se ejecutarán en un orden determinado
+// Mas adelante, habrá un plan de ejecución donde en una query las sentences se ejecutarán en un orden determinado
 class Sentence {
 public:
   virtual void accept(ImpVisitor* v) = 0;
-  virtual void accept(TypeVisitor* v) = 0;
+  virtual void accept(CheckVisitor* v) = 0;
   virtual ~Sentence() = 0;
 };
 
@@ -169,26 +186,12 @@ public:
 class AtributeSent: public Sentence {
 public:
   string id;
-  ImpType type;
-  bool not_null = false;
-  AtributeSent(string id, ImpType type, bool not_null);
+  ValueType type;
+  bool not_null;
+  AtributeSent(string id, ValueType type, bool not_null);
   void accept(ImpVisitor* v);
-  void accept(TypeVisitor* v);
+  void accept(CheckVisitor* v);
   ~AtributeSent();
-};
-
-
-// Una table puede ser solo un name_table como id o un name_table con un query asociado
-// ['(' <select_query> ')'] AS <name_table>
-class TableSent: public Sentence {
-public:
-  string name_table;
-  SelectQuery* query = nullptr;
-  TableSent(string name_table);
-  TableSent(string name_table, SelectQuery* query);
-  void accept(ImpVisitor* v);
-  void accept(TypeVisitor* v);
-  ~TableSent();
 };
 
 
@@ -197,9 +200,9 @@ public:
 class SelectSent: public Sentence {
 public:
   list<string> ids;
-  SelectSent(list<string> ids, list<TableSent*> tables);
+  SelectSent(list<string> ids);
   void accept(ImpVisitor* v);
-  void accept(TypeVisitor* v);
+  void accept(CheckVisitor* v);
   ~SelectSent();
 };
 
@@ -208,11 +211,11 @@ public:
 // FROM <table> [<join_sent>] (',' <table> [<join_sent>])*
 class FromSent: public Sentence {
 public:
-  list<TableSent*> tables;
+  list<TableDec*> tables;
   list<JoinSent*> joins;   // si una tabla no tiene join, su join en la lista es nullptr
-  FromSent(list<TableSent*> tables, list<JoinSent*> joins);
+  FromSent(list<TableDec*> tables, list<JoinSent*> joins);
   void accept(ImpVisitor* v);
-  void accept(TypeVisitor* v);
+  void accept(CheckVisitor* v);
   ~FromSent();
 };
 
@@ -221,24 +224,24 @@ public:
 // WHERE <exp>
 class WhereSent: public Sentence {
 public:
-  Exp* exp;
-  WhereSent(Exp* exp);
+  Exp* e;
+  WhereSent(Exp* e);
   void accept(ImpVisitor* v);
-  void accept(TypeVisitor* v);
+  void accept(CheckVisitor* v);
   ~WhereSent();
 };
 
 
 // Update Sentence de la forma:
-// UPDATE <table> SET <id> '=' <value_exp> [',' <id> '=' <value_exp>]*
+// UPDATE <table> SET <id> '=' <value> [',' <id> '=' <value>]*
 class UpdateSent: public Sentence {
 public:
   string table;
   list<string> ids;
-  list<ValueExp*> values;
-  UpdateSent(string table, list<string> ids, list<ValueExp*> values);
+  list<Value*> values;
+  UpdateSent(string table, list<string> ids, list<Value*> values);
   void accept(ImpVisitor* v);
-  void accept(TypeVisitor* v);
+  void accept(CheckVisitor* v);
   ~UpdateSent();
 };
 
@@ -250,7 +253,7 @@ public:
   int limit;
   LimitSent(int limit);
   void accept(ImpVisitor* v);
-  void accept(TypeVisitor* v);
+  void accept(CheckVisitor* v);
   ~LimitSent();
 };
 
@@ -259,12 +262,13 @@ public:
 // [INNER | LEFT | RIGHT | CROSS] JOIN <table> ON <join_exp>
 class JoinSent: public Sentence {
 public:
-  TableSent* table;
-  JoinExp* join;
-  JoinSent(TableSent* table);
-  JoinSent(TableSent* table, JoinExp* join);
+  JoinOp op;
+  TableDec* table;
+  JoinExp* e;
+  JoinSent(JoinOp op, TableDec* table, JoinExp* e);
   void accept(ImpVisitor* v);
-  void accept(TypeVisitor* v);
+  void accept(CheckVisitor* v);
+  static string joinopToString(JoinOp op);
   ~JoinSent();
 };
 
@@ -275,20 +279,20 @@ public:
 class Query {
 public:
   virtual void accept(ImpVisitor* v) = 0;
-  virtual void accept(TypeVisitor* v) = 0;
+  virtual void accept(CheckVisitor* v) = 0;
   virtual ~Query() = 0;
 };
 
 
 // Create Query de la forma:
-// CREATE TABLE <table> '(' <atribute> [',' <atribute>]* ')'
+// CREATE TABLE <table> '(' <atribute_sent> [',' <atribute_sent>]* ')'
 class CreateQuery: public Query {
 public:
   string table;
   list<AtributeSent*> atributes;
   CreateQuery(string table, list<AtributeSent*> atributes);
   void accept(ImpVisitor* v);
-  void accept(TypeVisitor* v);
+  void accept(CheckVisitor* v);
   ~CreateQuery();
 };
 
@@ -297,26 +301,26 @@ public:
 // <select_sent> <from_sent> [ <where_sent> ] [ <limit_sent> ]
 class SelectQuery: public Query {
 public:
-  SelectSent* select = nullptr; // es nullptr si se seleccionan todas las columnas
+  SelectSent* select; // es nullptr si se seleccionan todas las columnas
   FromSent* from;
-  WhereSent* where = nullptr;
-  LimitSent* limit = nullptr;
+  WhereSent* where;
+  LimitSent* limit;
   SelectQuery(FromSent* from, SelectSent* select, WhereSent* where, LimitSent* limit);
   void accept(ImpVisitor* v);
-  void accept(TypeVisitor* v);
+  void accept(CheckVisitor* v);
   ~SelectQuery();
 };
 
 
 // Insert Query de la forma:
-// INSERT INTO <id> VALUES '(' <value_exp> [',' <value_exp>]* ')'
+// INSERT INTO <id> VALUES '(' <value> [',' <value>]* ')'
 class InsertQuery: public Query {
 public:
   string table;
-  list<ValueExp*> values;
-  InsertQuery(string table, list<ValueExp*> values);
+  list<Value*> values;
+  InsertQuery(string table, list<Value*> values);
   void accept(ImpVisitor* v);
-  void accept(TypeVisitor* v);
+  void accept(CheckVisitor* v);
   ~InsertQuery();
 };
 
@@ -329,7 +333,7 @@ public:
   WhereSent* where = nullptr;
   UpdateQuery(UpdateSent* update, WhereSent* where);
   void accept(ImpVisitor* v);
-  void accept(TypeVisitor* v);
+  void accept(CheckVisitor* v);
   ~UpdateQuery();
 };
 
@@ -339,11 +343,24 @@ public:
 class DeleteQuery: public Query {
 public:
   string table;
-  Exp* exp = nullptr;
+  Exp* exp;
   DeleteQuery(string table, Exp* exp);
   void accept(ImpVisitor* v);
-  void accept(TypeVisitor* v);
+  void accept(CheckVisitor* v);
   ~DeleteQuery();
+};
+
+
+
+// ---------------------------------------------------------------- //
+// Lista de Queries
+class QueryList {
+public:
+  list<Query*> queries;
+  QueryList(list<Query*> queries);
+  void accept(ImpVisitor* v);
+  void accept(CheckVisitor* v);
+  ~QueryList();
 };
 
 #endif

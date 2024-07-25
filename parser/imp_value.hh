@@ -8,22 +8,26 @@
 
 using namespace std;
 
-enum TType { NOTYPE=0, TVARCHAR, TINT, TBOOLEAN, TDATE }; // value type
+enum ValueType { NOTYPE=0, TVARCHAR, TINT, TBOOLEAN, TDATE }; // value type
+const char* type_names[5] = { "notype", "varchar", "int", "boolean", "date" };
 
-class ImpValue {
+
+// Guarda el valor de acuerdo al tipo ValueType
+class ValueData {
 public:
-  ImpValue();
-  TType type;
+  ValueData();
+  ValueType type;
   int int_value;
   bool bool_value;
   string varchar_value;
   string date_value;
+  bool set_basic_type(ValueType tt);
 };
 
 
-ImpValue::ImpValue():type(NOTYPE) { }
+ValueData::ValueData():type(NOTYPE) { }
 
-ostream& operator<<(ostream& outs, const ImpValue& v) {
+ostream& operator<<(ostream& outs, const ValueData& v) {
   if (v.type == TINT)
     outs << v.int_value;
   else if (v.type == TBOOLEAN)
@@ -36,4 +40,24 @@ ostream& operator<<(ostream& outs, const ImpValue& v) {
     outs << "NOTYPE";
   return outs;
 }
+
+bool ValueData::set_basic_type(ValueType tt) {
+  bool ret = true;
+  switch(tt) {
+    case TDATE:
+    case TVARCHAR:
+    case TINT:
+    case TBOOLEAN:
+      this->type = tt; break;
+    default:
+      ret = false;
+  }
+  return ret;
+}
+
+std::ostream& operator<<( std::ostream& outs, const ValueType& type) {
+  outs << type_names[type];
+  return outs;
+}
+
 #endif

@@ -1,5 +1,28 @@
 #include "scanner.hh"
+#include <cstring>
 
+// Token section
+Token::Token(TokenType t): type(t) {}
+Token::Token(TokenType t, string source): type(t), lexema(source) {}
+Token::Token(TokenType t, char err_c): type(t), error(err_c) {}
+
+ostream& operator<<(ostream& os, const Token* value) {
+  os << token_names[value->type];
+  if (!(value->lexema.empty()))
+    os << "(" << value->lexema << ")";
+  return os;
+}
+
+// string uppercase to lowercase
+string toLower(string s) {
+  string res = s;
+  for (int i = 0; i < s.size(); i++)
+    if (s[i] >= 'A' && s[i] <= 'Z')
+      res[i] = s[i] + 32;
+  return res;
+}
+
+// Scanner section
 void Scanner::initReserved() {
   reserved["create"] = CREATE;
   reserved["insert"] = INSERT;
@@ -27,6 +50,13 @@ void Scanner::initReserved() {
   reserved["left"] = LEFT;
   reserved["right"] = RIGHT;
   reserved["cross"] = CROSS;
+  reserved["varchar"] = VARCHAR;
+  reserved["int"] = INT;
+  reserved["float"] = FLOAT;
+  reserved["boolean"] = BOOLEAN;
+  reserved["date"] = DATE;
+  reserved["true"] = TRUE;
+  reserved["false"] = FALSE;
 }
 
 Scanner::Scanner(): input(""), first(0), current(0) {
@@ -49,11 +79,11 @@ void Scanner::resetScanner() { first = 0; current = 0; }
 
 // Verifica si el lexema es una palabra reservada
 Token* Scanner::checkReserved(string lexema) {
-  unordered_map<string, KeywordType>::const_iterator it = reserved.find(lexema);
+  unordered_map<string, TokenType>::const_iterator it = reserved.find(toLower(lexema));
   if (it == reserved.end())
-    return new Value(ID, lexema);
+    return new Token(ID, lexema);
   else
-    return new Keyword(it->second);
+    return new Token(it->second);
 }
 
 // Retorna el siguiente token del input
@@ -65,7 +95,7 @@ Token* Scanner::nextToken() {
   while (c == ' ') c = nextChar();
 
   // si llega al final del input, retorna un token de fin
-  if (c == '\0') return new Sign(END);
+  if (c == '\0') return new Token(END);
   startLexema();
 
   if (c == '\'') {
@@ -73,14 +103,14 @@ Token* Scanner::nextToken() {
     c = nextChar();
     while (c != '\'')  c = nextChar();
     string lex = getLexema();
-    token = new Value(VARCHAR, lex.substr(1,lex.size()-2));
+    token = new Token(VARCHAR, lex.substr(1,lex.size()-2));
   }
   else if (c == '\"') {
     // si encuentra una comilla doble, se valida un varchar
     c = nextChar();
     while (c != '\"')  c = nextChar();
     string lex = getLexema();
-    token = new Value(VARCHAR, lex.substr(1,lex.size()-2));
+    token = new Token(VARCHAR, lex.substr(1,lex.size()-2));
   }
 
   else if (isdigit(c)) {
@@ -93,14 +123,14 @@ Token* Scanner::nextToken() {
       if (isdigit(c)) {
         while (isdigit(c)) c = nextChar();
         rollBack();
-        token = new Value(FLOAT, getLexema());
+        token = new Token(FLOAT, getLexema());
       } else {
-        token = new Sign(ERR, c);
+        token = new Token(ERR, c);
       }
     } else {
       // caso contrario, es un entero
       rollBack();
-      token = new Value(INT, getLexema());
+      token = new Token(INT, getLexema());
     }
   } 
   
@@ -109,7 +139,6 @@ Token* Scanner::nextToken() {
     c = nextChar();
     while (isalpha(c) || c == '_')  c = nextChar();
     rollBack();
-
     string lex = getLexema();
     token = checkReserved(lex);
   } 
@@ -117,36 +146,36 @@ Token* Scanner::nextToken() {
   else if (strchr("*(),;<>=", c)) {
     // si encuentra un caracter especial, retorna el token correspondiente
     switch(c) {
-      case '(': token = new Sign(LPAREN); break;
-      case ')': token = new Sign(RPAREN); break;
-      case '*': token = new Sign(ALL); break;
-      case ',': token = new Sign(COMMA); break;
-      case ';': token = new Sign(PTCOMMA); break;
-      case '=': token = new Sign(EQUAL); break;
+      case '(': token = new Token(LPAREN); break;
+      case ')': token = new Token(RPAREN); break;
+      case '*': token = new Token(ALL); break;
+      case ',': token = new Token(COMMA); break;
+      case ';': token = new Token(PTCOMMA); break;
+      case '=': token = new Token(EQUAL); break;
       case '<':
         c = nextChar();
         if (c == '=')
-          token = new Sign(LTEQ);
+          token = new Token(LTEQ);
         else if (c == '>') 
-          token = new Sign(NEQ);
+          token = new Token(NEQ);
         else {
           rollBack();
-          token = new Sign(LT);
+          token = new Token(LT);
         }; 
         break;
 
       case '>':
         c = nextChar();
         if (c == '=')
-          token = new Sign(GTEQ);
+          token = new Token(GTEQ);
         else {
           rollBack();
-          token = new Sign(GT);
+          token = new Token(GT);
         }; 
         break;
     }
   } else {
-    token = new Sign(ERR, c);
+    token = new Token(ERR, c);
   }
   cout << "next token " << token << endl;
   return token;
