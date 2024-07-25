@@ -6,13 +6,11 @@ void Scanner::initReserved() {
   reserved["into"] = INTO;
   reserved["values"] = VALUES;
   reserved["update"] = UPDATE;
-  reserved["drop"] = DROP;
+  reserved["delete"] = DELETE;
   reserved["table"] = TABLE;
   reserved["select"] = SELECT;
   reserved["from"] = FROM;
   reserved["where"] = WHERE;
-  reserved["if"] = IF;
-  reserved["exists"] = EXISTS;
   reserved["on"] = ON;
   reserved["set"] = SET;
   reserved["between"] = BETWEEN;
@@ -24,8 +22,11 @@ void Scanner::initReserved() {
   reserved["not"] = NOT;
   reserved["as"] = AS;
   reserved["limit"] = LIMIT;
-  reserved["using"] = USING;
-  reserved["index"] = INDEX;
+  reserved["join"] = JOIN;
+  reserved["inner"] = INNER;
+  reserved["left"] = LEFT;
+  reserved["right"] = RIGHT;
+  reserved["cross"] = CROSS;
 }
 
 Scanner::Scanner(): input(""), first(0), current(0) {
@@ -126,6 +127,8 @@ Token* Scanner::nextToken() {
         c = nextChar();
         if (c == '=')
           token = new Sign(LTEQ);
+        else if (c == '>') 
+          token = new Sign(NEQ);
         else {
           rollBack();
           token = new Sign(LT);

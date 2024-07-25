@@ -15,12 +15,11 @@ const char* sign_names[13] = {
   "(", ")", ",", ";", "=", "!=", "<", ">", "<=", ">=", "*", "ERR", "END"
 };
 
-enum KeywordType { CREATE=0, INSERT, INTO, VALUES, UPDATE, DROP, TABLE, SELECT, FROM, WHERE, ON, SET, BETWEEN, IN, LIKE, AND, OR, NULLW, NOT, AS, LIMIT, USING, INDEX };
-const char* keyword_names[23] = {
-  "CREATE", "INSERT", "INTO", "VALUES", "UPDATE", "DROP", "TABLE", "SELECT", "FROM",
-  "WHERE", "ON", "SET",
-  "BETWEEN", "IN", "LIKE", "AND", "OR", "NULL", "NOT", "AS", "LIMIT",
-  "USING", "INDEX"
+enum KeywordType { CREATE=0, INSERT, INTO, VALUES, UPDATE, DELETE, TABLE, SELECT, FROM, WHERE, ON, SET, BETWEEN, IN, LIKE, AND, OR, NULLW, NOT, AS, LIMIT,
+                   JOIN, INNER, LEFT, RIGHT, CROSS };
+const char* keyword_names[26] = {
+  "CREATE", "INSERT", "INTO", "VALUES", "UPDATE", "DELETE", "TABLE", "SELECT", "FROM", "WHERE", "ON", "SET", "BETWEEN", "IN", "LIKE", "AND", "OR", "NULL", "NOT", "AS", "LIMIT",
+  "JOIN", "INNER", "LEFT", "RIGHT", "CROSS"
 };
 
 enum ValueType { ID=0, VARCHAR, INT, FLOAT, BOOLEAN, DATE };
