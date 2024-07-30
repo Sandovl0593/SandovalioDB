@@ -15,7 +15,10 @@ public:
   void visit(UpdateQuery* q);
 
   void visit(TableDec* t);
-  void visit(Value* v);
+  void visit(IntValue* v);
+  void visit(StringValue* v);
+  void visit(BoolValue* v);
+  void visit(FloatValue* v);
 
   void visit(BinaryExp* e);
   void visit(UnaryExp* e);

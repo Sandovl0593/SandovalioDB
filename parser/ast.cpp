@@ -1,11 +1,13 @@
 #include "ast.hh"
+#include "imp_visitor.hh"
+#include "check_visitor.hh"
 
 string BinaryExp::binopToString(BinaryOp op) {
   return (op == AND) ? "AND" : "OR";
 }
 
 string UnaryExp::unopToString(UnaryOp op) {
-  return (op == NOT) ? "NOT" : "-";
+  return (op == NOT) ? "NOT " : "-";
 }
 
 string FilterExp::filopToString(FilterOp op) {
@@ -22,14 +24,13 @@ string FilterExp::filopToString(FilterOp op) {
 
 string JoinSent::joinopToString(JoinOp op) {
   switch (op) {
-    case INNER: return "INNER";
-    case LEFT: return "LEFT";
-    case RIGHT: return "RIGHT";
-    case CROSS: return "CROSS";
+    case INNER: return "INNER JOIN";
+    case LEFT: return "LEFT JOIN";
+    case RIGHT: return "RIGHT JOIN";
+    case CROSS: return "CROSS JOIN";
   }
   return "";
 }
-
 
 // ---------------------------------------------------------------- //
 // Cons. y Des. clase TableDec
@@ -40,9 +41,18 @@ TableDec::~TableDec() {
 }
 
 // ---------------------------------------------------------------- //
-// Cons. y Des. clase Value
-Value::Value(ValueData v): value(v) {}
-Value::~Value() {}
+// Cons. y Des. de la clase Value
+IntValue::IntValue(int value): value(value) {}
+IntValue::~IntValue() {}
+
+StringValue::StringValue(string value): value(value) {}
+StringValue::~StringValue() {}
+
+BoolValue::BoolValue(bool value): value(value) {}
+BoolValue::~BoolValue() {}
+
+FloatValue::FloatValue(float value): value(value) {}
+FloatValue::~FloatValue() {}
 
 // ---------------------------------------------------------------- //
 // Cons. y Desc. de las clases Exp
@@ -142,7 +152,10 @@ void DeleteQuery::accept(ImpVisitor* v) { v->visit(this); }
 void UpdateQuery::accept(ImpVisitor* v) { v->visit(this); }
 
 void TableDec::accept(ImpVisitor* v) { v->visit(this); }
-void Value::accept(ImpVisitor* v) { v->visit(this); }
+void IntValue::accept(ImpVisitor* v) { v->visit(this); }
+void StringValue::accept(ImpVisitor* v) { v->visit(this); }
+void BoolValue::accept(ImpVisitor* v) { v->visit(this); }
+void FloatValue::accept(ImpVisitor* v) { v->visit(this); }
 
 void BinaryExp::accept(ImpVisitor* v) { v->visit(this); }
 void UnaryExp::accept(ImpVisitor* v) { v->visit(this); }
@@ -173,7 +186,10 @@ void DeleteQuery::accept(CheckVisitor* v) { v->visit(this); }
 void UpdateQuery::accept(CheckVisitor* v) { v->visit(this); }
 
 void TableDec::accept(CheckVisitor* v) { v->visit(this); }
-ValueType Value::accept(CheckVisitor* v) { return v->visit(this); }
+ValueType IntValue::accept(CheckVisitor* v) { return v->visit(this); }
+ValueType StringValue::accept(CheckVisitor* v) { return v->visit(this); }
+ValueType BoolValue::accept(CheckVisitor* v) { return v->visit(this); }
+ValueType FloatValue::accept(CheckVisitor* v) { return v->visit(this); }
 
 void BinaryExp::accept(CheckVisitor* v) { v->visit(this); }
 void UnaryExp::accept(CheckVisitor* v) { v->visit(this); }

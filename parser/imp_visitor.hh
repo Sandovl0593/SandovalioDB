@@ -13,7 +13,10 @@ public:
   virtual void visit(UpdateQuery*) = 0;
 
   virtual void visit(TableDec*) = 0;
-  virtual void visit(Value*) = 0;
+  virtual void visit(IntValue*) = 0;
+  virtual void visit(StringValue*) = 0;
+  virtual void visit(BoolValue*) = 0;
+  virtual void visit(FloatValue*) = 0;
 
   virtual void visit(BinaryExp* e) = 0;
   virtual void visit(UnaryExp* e) = 0;

@@ -4,7 +4,6 @@
 #include "ast.hh"
 #include "imp_visitor.hh"
 #include "check_visitor.hh"
-// #include "environment.hh"
 
 // este visitor construye el plan de ejecucion SQL a partir del AST
 class PlanExecVisitor : public ImpVisitor {
@@ -22,7 +21,10 @@ public:
   void visit(UpdateQuery* q);
 
   void visit(TableDec* t);
-  void visit(Value* v);
+  void visit(IntValue* v);
+  void visit(StringValue* v);
+  void visit(BoolValue* v);
+  void visit(FloatValue* v);
 
   void visit(BinaryExp* e);
   void visit(UnaryExp* e);

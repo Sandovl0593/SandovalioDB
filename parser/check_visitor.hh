@@ -3,16 +3,15 @@
 
 #include <unordered_map>
 #include "ast.hh"
-// #include "environment.hh"
+#include "environment.hh"
 
-using namespace std;
 
 // este visitor revisa el AST para verificar que sea correcto
 class CheckVisitor {
 public:
   CheckVisitor();
 private:
-  // Environment<ValueType> env; // environment de atributos
+  Environment<ValueType> env; // environment de atributos
 
 public:
   void typecheck(QueryList*); 
@@ -24,7 +23,10 @@ public:
   void visit(UpdateQuery*);
 
   void visit(TableDec*);
-  ValueType visit(Value*);
+  ValueType visit(IntValue*);
+  ValueType visit(StringValue*);
+  ValueType visit(BoolValue*);
+  ValueType visit(FloatValue*);
 
   void visit(BinaryExp* e);
   void visit(UnaryExp* e);

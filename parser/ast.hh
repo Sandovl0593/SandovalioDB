@@ -1,20 +1,21 @@
 #ifndef AST_HH
 #define AST_HH
 
+#include <iostream>
 #include <cstring>
 #include <list>
-#include "imp_value.hh"
 using namespace std;
-
-class ImpVisitor;
-class CheckVisitor;
 
 enum FilterOp { EQ, NEQ, LT, GT, LTEQ, GTEQ };
 enum JoinOp { INNER, LEFT, RIGHT, CROSS };
 enum BinaryOp { AND, OR };
 enum UnaryOp { NEG, NOT };
+enum ValueType { NOTYPE=0, TVARCHAR, TINT, TBOOLEAN, TDATE, TFLOAT }; // value types
 
+class ImpVisitor;
+class CheckVisitor;
 class SelectQuery;
+
 
 // ---------------------------------------------------------------- //
 // Una tabla es una referencia a una tabla en una base de datos 
@@ -37,11 +38,53 @@ public:
 // Un value es un valor que puede ser utilizado en una expresion que puede ser <int>, <varchar>, <boolean>, <date>
 class Value {
 public:
-  ValueData value;
-  Value(ValueData v);
+  virtual void accept(ImpVisitor* v) = 0;
+  virtual ValueType accept(CheckVisitor* v) = 0;
+  virtual ~Value() = 0;
+};
+
+
+// Value de tipo int
+class IntValue : public Value {
+public:
+  int value;
+  IntValue(int value);
   void accept(ImpVisitor* v);
   ValueType accept(CheckVisitor* v);
-  ~Value();
+  ~IntValue();
+};
+
+
+// Value de tipo string (en el checker se verifica si es un varchar o un date)
+class StringValue : public Value {
+public:
+  string value;
+  StringValue(string value);
+  void accept(ImpVisitor* v);
+  ValueType accept(CheckVisitor* v);
+  ~StringValue();
+};
+
+
+// Value de tipo boolean
+class BoolValue : public Value {
+public:
+  bool value;
+  BoolValue(bool value);
+  void accept(ImpVisitor* v);
+  ValueType accept(CheckVisitor* v);
+  ~BoolValue();
+};
+
+
+// Value de tipo float
+class FloatValue : public Value {
+public:
+  float value;
+  FloatValue(float value);
+  void accept(ImpVisitor* v);
+  ValueType accept(CheckVisitor* v);
+  ~FloatValue();
 };
 
 
