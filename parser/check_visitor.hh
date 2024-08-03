@@ -2,7 +2,6 @@
 #define CHECKER_HH
 
 #include <unordered_map>
-#include "ast.hh"
 #include "environment.hh"
 
 
@@ -12,7 +11,6 @@ public:
   CheckVisitor();
 private:
   Environment<ValueType> env; // environment de atributos
-
 public:
   void typecheck(QueryList*); 
   void visit(QueryList*);

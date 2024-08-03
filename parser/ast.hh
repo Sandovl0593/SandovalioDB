@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cstring>
 #include <list>
+
 using namespace std;
 
 enum FilterOp { EQ, NEQ, LT, GT, LTEQ, GTEQ };
@@ -228,10 +229,11 @@ public:
 // <id> <type> [NOT NULL]
 class AtributeSent: public Sentence {
 public:
+  string table;
   string id;
   ValueType type;
   bool not_null;
-  AtributeSent(string id, ValueType type, bool not_null);
+  AtributeSent(string table, string id, ValueType type, bool not_null);
   void accept(ImpVisitor* v);
   void accept(CheckVisitor* v);
   ~AtributeSent();

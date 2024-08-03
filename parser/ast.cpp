@@ -88,7 +88,7 @@ InQueryExp::~InQueryExp() { delete query; }
 
 // ---------------------------------------------------------------- //
 // Cons. y Desc. de las clases Sentence
-AtributeSent::AtributeSent(string id, ValueType type, bool not_null): id(id), type(type), not_null(not_null) {}
+AtributeSent::AtributeSent(string table, string id, ValueType type, bool not_null) : table(table), id(id), type(type), not_null(not_null) {}
 AtributeSent::~AtributeSent() {}
 
 SelectSent::SelectSent(list<string> ids): ids(ids) {}

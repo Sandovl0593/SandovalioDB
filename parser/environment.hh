@@ -2,87 +2,91 @@
 #define ENV
 
 #include <unordered_map>
-#include <list>
-#include <vector>
 #include <string>
-
-#include <iostream>
+#include <fstream>
+#include "ast.hh"
 using namespace std;
 
-template <typename T>
+// en el archivo env_tables.dat
+// cada linea es de tipo: <nombre_tabla> <nombre_atributo> <tipo> or
+//                        subq_<nombre_tabla> <nombre_atributo> <tipo>
 class Environment {
-private:
-  vector<unordered_map<string, T> > ribs;
-  int search_rib(string var) {
-    int idx = ribs.size() - 1;  
-    while (idx >= 0) {
-      typename std::unordered_map<std::string,T>::const_iterator it = ribs[idx].find(var);
-      if (it != ribs[idx].end()) // not found
-        return idx;
-      idx--;
-    }
-    return -1;
-  }
-
+  fstream file;
 public:
-  Environment() {}
-  void clear() {
-    ribs.clear();
-  }
-
-  void add_level(){
-    unordered_map<string, T> r;
-    ribs.push_back(r);
-  }
-
-  void add_var(string var, T value) {
-    if (ribs.size() == 0) {
-      cout << "Environment sin niveles: no se pueden agregar variables" << endl;
+  Environment() {
+    // read from file
+    file.open("env_tables.dat", ios::in);
+    if (!file.is_open()) {
+      cout << "Error: no se pudo abrir el archivo env_tables.dat" << endl;
       exit(0);
     }
-    ribs.back()[var] = value;
+    file.close();
   }
-
-  void add_var(string var) {
-    ribs.back()[var] = 0;
+  void add_var(string table, string atr, ValueType value) {
+    file.open("env_tables.dat", ios::app);
+    if (!file.is_open()) {
+      cout << "Error: no se pudo abrir el archivo env_tables.dat" << endl;
+      exit(0);
+    }
+    file << table << " " << atr << " " << word_type(value) << endl;
+    file.close();
   }
   
-  bool remove_level() {
-    if (ribs.size()>0) {
-      ribs.pop_back();
-      return true;
+  void remove_subqueries() {
+    fstream temp;
+    temp.open("temp.dat", ios::out);
+    if (!temp.is_open()) {
+      temp.open("temp.dat", ios::out);
+      temp.close();
     }
-    return false;
+    file.open("env_tables.dat", ios::in);
+    if (!file.is_open()) {
+      cout << "Error: no se pudo abrir el archivo env_tables.dat" << endl;
+      exit(0);
+    }
+    string table, atr, type;
+    while (file >> table >> atr >> type) {
+      if (table.substr(0, 4) != "subq") {
+        temp << table << " " << atr << " " << type << endl;
+      }
+    }
+    file.close();
+    temp.close();
+    remove("env_tables.dat");
+    rename("temp.dat", "env_tables.dat");
   }
 
-  bool update(string x, T v) {
-    int idx = search_rib(x);
-    if (idx < 0) return false;
-    ribs[idx][x] = v;
-    return true;
+  ValueType check_word(string word) {
+    if (word == "int") return TINT;
+    if (word == "varchar") return TVARCHAR;
+    if (word == "boolean") return TBOOLEAN;
+    if (word == "float") return TFLOAT;
+    else  return TDATE;
   }
 
-  bool check(string x) {
-    int idx = search_rib(x);
-    return (idx >= 0);
+  string word_type(ValueType type) {
+    if (type == TINT) return "int";
+    if (type == TVARCHAR) return "varchar";
+    if (type == TBOOLEAN) return "boolean";
+    if (type == TFLOAT) return "float";
+    else return "date";
   }
 
-  T lookup(string x) {
-    T a;
-    int idx = search_rib(x);
-    if (idx < 0) return a;
-    else return ribs[idx][x];
-  }
-
-  bool lookup(string x, T& v) {
-    int idx = search_rib(x);
-    if (idx < 0) return false;
-    v = ribs[idx][x];
-    return true;
-  }
-
-  unordered_map<string, T>& get_current_level() {
-    return ribs.back();
+  ValueType lookup_atribute(string table, string atr) {
+    file.open("env_tables.dat", ios::in);
+    if (!file.is_open()) {
+      cout << "Error: no se pudo abrir el archivo env_tables.dat" << endl;
+      exit(0);
+    }
+    string table2, atr2, type;
+    while (file >> table2 >> atr2 >> type) {
+      if (atr == atr2 && table == table2) {
+        file.close();
+        return check_word(type);
+      }
+    }
+    file.close();
+    return NOTYPE;
   }
 };
 
