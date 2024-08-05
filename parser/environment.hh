@@ -16,18 +16,10 @@ public:
   Environment() {
     // read from file
     file.open("env_tables.dat", ios::in);
-    if (!file.is_open()) {
-      cout << "Error: no se pudo abrir el archivo env_tables.dat" << endl;
-      exit(0);
-    }
     file.close();
   }
   void add_var(string table, string atr, ValueType value) {
     file.open("env_tables.dat", ios::app);
-    if (!file.is_open()) {
-      cout << "Error: no se pudo abrir el archivo env_tables.dat" << endl;
-      exit(0);
-    }
     file << table << " " << atr << " " << word_type(value) << endl;
     file.close();
   }
@@ -35,15 +27,7 @@ public:
   void remove_subqueries() {
     fstream temp;
     temp.open("temp.dat", ios::out);
-    if (!temp.is_open()) {
-      temp.open("temp.dat", ios::out);
-      temp.close();
-    }
     file.open("env_tables.dat", ios::in);
-    if (!file.is_open()) {
-      cout << "Error: no se pudo abrir el archivo env_tables.dat" << endl;
-      exit(0);
-    }
     string table, atr, type;
     while (file >> table >> atr >> type) {
       if (table.substr(0, 4) != "subq") {
@@ -72,15 +56,16 @@ public:
     else return "date";
   }
 
-  ValueType lookup_atribute(string table, string atr) {
+  ValueType lookup(string table, string atr = "") {
     file.open("env_tables.dat", ios::in);
-    if (!file.is_open()) {
-      cout << "Error: no se pudo abrir el archivo env_tables.dat" << endl;
-      exit(0);
-    }
     string table2, atr2, type;
     while (file >> table2 >> atr2 >> type) {
-      if (atr == atr2 && table == table2) {
+      // si atr es vacio, solo se busca la tabla
+      if (atr == "" && table == table2) {
+        file.close();
+        return check_word(type);
+      }
+      else if (table == table2 && atr == atr2) {
         file.close();
         return check_word(type);
       }

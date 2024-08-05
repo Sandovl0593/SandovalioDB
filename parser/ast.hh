@@ -141,10 +141,11 @@ public:
 // Expresion de filtro de la forma: <id> <op> <value>
 class FilterExp : public Exp {
 public:
+  string tref;
   string id;
   Value *value;
   FilterOp op;
-  FilterExp(string id, Value* value, FilterOp op);
+  FilterExp(string tref, string id, Value* value, FilterOp op);
   void accept(ImpVisitor* v);
   void accept(CheckVisitor* v);
   static string filopToString(FilterOp op);
@@ -155,10 +156,11 @@ public:
 // Expresion con Between de la forma: <id> BETWEEN <left> AND <right>
 class BetweenExp : public Exp {
 public:
+  string tref;
   string id;
   Value *left;
   Value *right;
-  BetweenExp(string id, Value* l, Value* r);
+  BetweenExp(string tref, string id, Value* l, Value* r);
   void accept(ImpVisitor* v);
   void accept(CheckVisitor* v);
   ~BetweenExp();
@@ -168,9 +170,10 @@ public:
 // Expresion con Like de la forma: <id> LIKE <pattern>
 class LikeExp : public Exp {
 public:
+  string tref;
   string id;
   string pattern;
-  LikeExp(string id, string pattern);
+  LikeExp(string tref, string id, string pattern);
   void accept(ImpVisitor* v);
   void accept(CheckVisitor* v);
   ~LikeExp();
@@ -180,9 +183,9 @@ public:
 // Expresion de la forma: <id> '=' <id>
 class JoinExp : public Exp {
 public:
-  string id1;
-  string id2;
-  JoinExp(string id1, string id2);
+  string tref1, tref2;
+  string id1, id2;
+  JoinExp(string tref1, string tref2, string id1, string id2);
   void accept(ImpVisitor* v);
   void accept(CheckVisitor* v);
   ~JoinExp();
@@ -192,9 +195,10 @@ public:
 // Expresion de la forma: <id> IN '(' <value> [',' <value>]* ')'
 class InValueExp : public Exp {
 public:
+  string tref;
   string id;
   list<Value*> values;
-  InValueExp(string id, list<Value*> values);
+  InValueExp(string tref, string id, list<Value*> values);
   void accept(ImpVisitor* v);
   void accept(CheckVisitor* v);
   ~InValueExp();
@@ -204,9 +208,10 @@ public:
 // Expresion de la forma: <id> IN '(' <select_query> ')'
 class InQueryExp : public Exp {
 public:
+  string tref;
   string id;
   SelectQuery* query;
-  InQueryExp(string id, SelectQuery* query);
+  InQueryExp(string tref, string id, SelectQuery* query);
   void accept(ImpVisitor* v);
   void accept(CheckVisitor* v);
   ~InQueryExp();
@@ -242,26 +247,16 @@ public:
 
 // Select Sentence de la forma:
 // SELECT <id> (',' <id>)*
+// FROM <table> [<join_sent>] (',' <table> [<join_sent>])*
 class SelectSent: public Sentence {
 public:
   list<string> ids;
-  SelectSent(list<string> ids);
+  list<TableDec*> tables;
+  list<JoinSent*> joins;   // si una tabla no tiene join, su join en la lista es nullptr
+  SelectSent(list<string> ids, list<TableDec*> tables, list<JoinSent*> joins);
   void accept(ImpVisitor* v);
   void accept(CheckVisitor* v);
   ~SelectSent();
-};
-
-
-// Referencia a tabla de la forma:
-// FROM <table> [<join_sent>] (',' <table> [<join_sent>])*
-class FromSent: public Sentence {
-public:
-  list<TableDec*> tables;
-  list<JoinSent*> joins;   // si una tabla no tiene join, su join en la lista es nullptr
-  FromSent(list<TableDec*> tables, list<JoinSent*> joins);
-  void accept(ImpVisitor* v);
-  void accept(CheckVisitor* v);
-  ~FromSent();
 };
 
 
@@ -343,14 +338,13 @@ public:
 
 
 // Select Query de la forma:
-// <select_sent> <from_sent> [ <where_sent> ] [ <limit_sent> ]
+// <select_sent> [ <where_sent> ] [ <limit_sent> ]
 class SelectQuery: public Query {
 public:
-  SelectSent* select; // es nullptr si se seleccionan todas las columnas
-  FromSent* from;
+  SelectSent* select;
   WhereSent* where;
   LimitSent* limit;
-  SelectQuery(FromSent* from, SelectSent* select, WhereSent* where, LimitSent* limit);
+  SelectQuery(SelectSent* select, WhereSent* where, LimitSent* limit);
   void accept(ImpVisitor* v);
   void accept(CheckVisitor* v);
   ~SelectQuery();

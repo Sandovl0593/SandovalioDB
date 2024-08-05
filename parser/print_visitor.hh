@@ -33,7 +33,6 @@ public:
   void visit(AtributeSent* s);
   void visit(SelectSent* s);
   void visit(WhereSent* s);
-  void visit(FromSent* s);
   void visit(UpdateSent* s);
   void visit(LimitSent* s);
   void visit(JoinSent* s);

@@ -65,24 +65,24 @@ UnaryExp::~UnaryExp() { delete e; }
 ParenthExp::ParenthExp(Exp* e): e(e) {}
 ParenthExp::~ParenthExp() { delete e; }
 
-FilterExp::FilterExp(string id, Value* value, FilterOp op): id(id), value(value), op(op) {}
+FilterExp::FilterExp(string tref, string id, Value* value, FilterOp op): tref(tref), id(id), value(value), op(op) {}
 FilterExp::~FilterExp() { delete value; }
 
-BetweenExp::BetweenExp(string id, Value* l, Value* r): id(id), left(l), right(r) {}
+BetweenExp::BetweenExp(string tref, string id, Value* l, Value* r): tref(tref), id(id), left(l), right(r) {}
 BetweenExp::~BetweenExp() { delete left; delete right; }
 
-LikeExp::LikeExp(string id, string pattern): id(id), pattern(pattern) {}
+LikeExp::LikeExp(string tref, string id, string pattern): tref(tref), id(id), pattern(pattern) {}
 LikeExp::~LikeExp() {}
 
-JoinExp::JoinExp(string id1, string id2): id1(id1), id2(id2) {}
+JoinExp::JoinExp(string tref1, string tref2, string id1, string id2): tref1(tref1), tref2(tref2), id1(id1), id2(id2) {}
 JoinExp::~JoinExp() {}
 
-InValueExp::InValueExp(string id, list<Value*> values): id(id), values(values) {}
+InValueExp::InValueExp(string tref, string id, list<Value*> values): tref(tref), id(id), values(values) {}
 InValueExp::~InValueExp() {
   for (auto v : values) delete v;
 }
 
-InQueryExp::InQueryExp(string id, SelectQuery* query): id(id), query(query) {}
+InQueryExp::InQueryExp(string tref, string id, SelectQuery* query): tref(tref), id(id), query(query) {}
 InQueryExp::~InQueryExp() { delete query; }
 
 
@@ -91,11 +91,8 @@ InQueryExp::~InQueryExp() { delete query; }
 AtributeSent::AtributeSent(string table, string id, ValueType type, bool not_null) : table(table), id(id), type(type), not_null(not_null) {}
 AtributeSent::~AtributeSent() {}
 
-SelectSent::SelectSent(list<string> ids): ids(ids) {}
-SelectSent::~SelectSent() {}
-
-FromSent::FromSent(list<TableDec*> tables, list<JoinSent*> joins): tables(tables), joins(joins) {}
-FromSent::~FromSent() {
+SelectSent::SelectSent(list<string> ids, list<TableDec*> tables, list<JoinSent*> joins): ids(ids), tables(tables), joins(joins) {}
+SelectSent::~SelectSent() {
   for (auto t : tables) delete t;
   for (auto j : joins) delete j;
 }
@@ -127,8 +124,8 @@ CreateQuery::~CreateQuery() {
   for (auto a : atributes) delete a;
 }
 
-SelectQuery::SelectQuery(FromSent* from, SelectSent* select, WhereSent* where, LimitSent* limit): from(from), select(select), where(where), limit(limit) {}
-SelectQuery::~SelectQuery() { delete from; delete select; delete where; delete limit; }
+SelectQuery::SelectQuery(SelectSent* select, WhereSent* where, LimitSent* limit): select(select), where(where), limit(limit) {}
+SelectQuery::~SelectQuery() { delete select; delete where; delete limit; }
 
 InsertQuery::InsertQuery(string table, list<Value*> values): table(table), values(values) {}
 InsertQuery::~InsertQuery() {
@@ -169,7 +166,6 @@ void InQueryExp::accept(ImpVisitor* v) { v->visit(this); }
 
 void AtributeSent::accept(ImpVisitor* v) { v->visit(this); }
 void SelectSent::accept(ImpVisitor* v) { v->visit(this); }
-void FromSent::accept(ImpVisitor* v) { v->visit(this); }
 void WhereSent::accept(ImpVisitor* v) { v->visit(this); }
 void UpdateSent::accept(ImpVisitor* v) { v->visit(this); }
 void LimitSent::accept(ImpVisitor* v) { v->visit(this); }
@@ -203,7 +199,6 @@ void InQueryExp::accept(CheckVisitor* v) { v->visit(this); }
 
 void AtributeSent::accept(CheckVisitor* v) { v->visit(this); }
 void SelectSent::accept(CheckVisitor* v) { v->visit(this); }
-void FromSent::accept(CheckVisitor* v) { v->visit(this); }
 void WhereSent::accept(CheckVisitor* v) { v->visit(this); }
 void UpdateSent::accept(CheckVisitor* v) { v->visit(this); }
 void LimitSent::accept(CheckVisitor* v) { v->visit(this); }

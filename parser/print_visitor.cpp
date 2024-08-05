@@ -12,7 +12,7 @@ void PrintVisitor::visit(TableDec* t) {
     t->query->accept(this);
     cout << "\n) AS ";
   }
-  cout << t->name_tableDec << " ";
+  cout << t->name_tableDec;
 }
 
 // imprime un entero
@@ -72,7 +72,6 @@ void PrintVisitor::visit(InsertQuery* q) {
 // imprime una query de seleccion
 void PrintVisitor::visit(SelectQuery* q) {
   q->select->accept(this);
-  q->from->accept(this);
   if (q->where != nullptr)
     q->where->accept(this);
   if (q->limit != nullptr)
@@ -173,26 +172,22 @@ void PrintVisitor::visit(AtributeSent* s) {
 
 // imprime una sentencia de seleccion
 void PrintVisitor::visit(SelectSent* s) {
-  int size = s->ids.size();
+  int sizeId = s->ids.size(), sizeT = s->tables.size();
+  list<TableDec*>::iterator it_atr;
+  list<JoinSent*>::iterator it_join;
+
   cout << "SELECT ";
   for (auto it = s->ids.begin(); it != s->ids.end(); it++) {
     cout << *it;
-    if (--size > 0) cout << ", ";
+    if (--sizeId > 0) cout << ", ";
   }
-}
-
-// imprime una sentencia de seleccion de tablas
-void PrintVisitor::visit(FromSent* s) {
-  list<TableDec*>::iterator it_atr;
-  list<JoinSent*>::iterator it_join;
-  int size = s->tables.size();
   cout << "\nFROM ";
   for (it_atr = s->tables.begin(), it_join = s->joins.begin(); it_atr != s->tables.end(); it_atr++, it_join++) {
     (*it_atr)->accept(this);
     if (*it_join != nullptr)
       (*it_join)->accept(this);
 
-    if (--size > 0) cout << ", ";
+    if (--sizeT > 0) cout << ", ";
   }
 }
 

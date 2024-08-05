@@ -31,7 +31,6 @@ public:
   virtual void visit(AtributeSent*) = 0;
   virtual void visit(SelectSent*) = 0;
   virtual void visit(WhereSent*) = 0;
-  virtual void visit(FromSent*) = 0;
   virtual void visit(UpdateSent*) = 0;
   virtual void visit(LimitSent*) = 0;
   virtual void visit(JoinSent*) = 0;

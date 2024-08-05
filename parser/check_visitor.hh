@@ -7,10 +7,8 @@
 
 // este visitor revisa el AST para verificar que sea correcto
 class CheckVisitor {
-public:
-  CheckVisitor();
 private:
-  Environment<ValueType> env; // environment de atributos
+  Environment env; // environment de atributos
 public:
   void typecheck(QueryList*); 
   void visit(QueryList*);
@@ -26,9 +24,9 @@ public:
   ValueType visit(BoolValue*);
   ValueType visit(FloatValue*);
 
-  void visit(BinaryExp* e);
-  void visit(UnaryExp* e);
-  void visit(ParenthExp* e);
+  void visit(BinaryExp*);
+  void visit(UnaryExp*);
+  void visit(ParenthExp*);
   void visit(FilterExp*);
   void visit(JoinExp*);
   void visit(BetweenExp*);
@@ -39,7 +37,6 @@ public:
   void visit(AtributeSent*);
   void visit(SelectSent*);
   void visit(WhereSent*);
-  void visit(FromSent*);
   void visit(UpdateSent*);
   void visit(LimitSent*);
   void visit(JoinSent*);
